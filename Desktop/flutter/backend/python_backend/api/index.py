@@ -4,13 +4,12 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 
-# Load environment variables (works locally, ignored in Vercel)
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# Safe MongoDB connection
+# MongoDB connection
 mongo_uri = os.getenv("MONGO_URI")
 if not mongo_uri:
     raise RuntimeError("Missing MONGO_URI environment variable")
@@ -19,12 +18,10 @@ client = MongoClient(mongo_uri)
 db = client["arise_app"]
 users_collection = db["users"]
 
-# Root route for health check
 @app.route('/')
 def home():
-    return jsonify({"status": "Flask backend is live on Vercel"}), 200
+    return jsonify({"status": "Flask backend is live on Render"}), 200
 
-# Register route
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -41,11 +38,12 @@ def register():
     users_collection.insert_one({
         "username": username,
         "email": email,
-        "password": password  # 🔐 Hash in production
+        "password": password
     })
 
     return jsonify({"message": "User registered successfully"}), 201
 
-# Required WSGI handler for Vercel
-def handler(environ, start_response):
-    return app(environ, start_response)
+# 🚀 Required for Render
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
